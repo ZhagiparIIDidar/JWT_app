@@ -1,0 +1,19 @@
+# IDE
+.idea
+
+# Python
+__pychace__/
+*$py.class
+*py[cod]
+
+# Virtual environments
+.venv/
+
+# Environment variables
+.env
+.env.*
+
+# Local DB
+*.db
+*.sqlite
+*.sqlite3
