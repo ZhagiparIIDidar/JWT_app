@@ -7,8 +7,10 @@ from jwt import InvalidTokenError
 from starlette import status
 
 from app import crud
-from app.utils import validate_password, decode_jwt, encode_jwt
-from app.schemas import SUser
+from app.crud import create_user
+from app.models import UsersORM
+from app.utils import validate_password, decode_jwt, encode_jwt, hash_password
+from app.schemas import SUser, SUserBase
 from app.config import settings
 from app.database import SessionDep
 
@@ -39,26 +41,57 @@ def create_token(
     )
 
 
-async def validate_auth_user(
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Annotated
+
+# Предполагаем, что у тебя есть:
+# - SUser — Pydantic схема пользователя (response model)
+# - User — SQLAlchemy модель
+# - get_password_hash, verify_password — функции для паролей
+# - create_access_token, create_refresh_token
+
+
+async def login_or_register(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     session: SessionDep,
-):
-    if not (user := await crud.get_user_by_username(session, form_data.username)):
-        raise unauthed_exp
-    if not (
-        validate_password(
-            password=form_data.password,
-            hashed_password=user.hashed_password,
+) -> SUser:
+    """
+    Логинит пользователя.
+    Если пользователя нет в базе — автоматически создаёт его.
+    """
+
+    # Ищем пользователя по username
+    result = await session.execute(
+        select(UsersORM).where(UsersORM.username == form_data.username)
+    )
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        new_user = await create_user(
+            session=session,
+            user_data=SUserBase(
+                username=form_data.username,
+            ),
+            hashed_password=hash_password(form_data.password),
         )
-    ):
-        raise unauthed_exp
-    if not user.is_active:
-        raise unauthed_exp
+
+        return new_user
+
+    # Пользователь существует — проверяем пароль
+    if not validate_password(form_data.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Неверный пароль",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     return user
 
 
-async def get_tokens(user: Annotated[SUser, Depends(validate_auth_user)]):
+async def get_tokens(user: Annotated[SUser, Depends(login_or_register)]):
     # Здесь генерируешь access_token и refresh_token
     return {
         "access_token": create_access_token(user),
@@ -66,7 +99,7 @@ async def get_tokens(user: Annotated[SUser, Depends(validate_auth_user)]):
     }
 
 
-def create_access_token(user: SUser = Depends(validate_auth_user)):
+def create_access_token(user: SUser = Depends(login_or_register)):
     jwt_payload = {"sub": user.username, "username": user.username, "email": user.email}
     return create_token(
         token_type=ACCESS_TOKEN_TYPE,
@@ -75,7 +108,7 @@ def create_access_token(user: SUser = Depends(validate_auth_user)):
     )
 
 
-def create_refresh_token(user: SUser = Depends(validate_auth_user)):
+def create_refresh_token(user: SUser = Depends(login_or_register)):
     jwt_payload = {
         "sub": user.username,
     }

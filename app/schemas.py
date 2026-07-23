@@ -1,9 +1,11 @@
+from typing import Optional
+
 from pydantic import BaseModel, EmailStr, ConfigDict
 
 
 class SUserBase(BaseModel):
     username: str
-    email: EmailStr
+    email: Optional[EmailStr] = None
 
 
 class SUserCreate(SUserBase):
@@ -21,3 +23,9 @@ class SUserInDB(SUserBase):
 
     id: int
     hashed_password: str
+
+
+class TokenInfo(BaseModel):
+    access_token: str
+    refresh_token: str | None = None
+    token_type: str = "Bearer"

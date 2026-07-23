@@ -4,8 +4,6 @@ from fastapi.security import HTTPBearer
 from app.schemas import SUser, TokenInfo
 from app.helpers import (
     create_access_token,
-    create_refresh_token,
-    validate_auth_user,
     get_current_user_for_refresh,
     get_current_user,
     get_tokens,

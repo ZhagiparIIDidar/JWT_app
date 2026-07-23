@@ -7,8 +7,8 @@ BASE_DIR = Path(__file__).parent
 
 
 class AuthJWT(BaseModel):
-    PRIVATE_KEY_PATH: Path = BASE_DIR / "app" / "certs" / "jwt-private.pem"
-    PUBLIC_KEY_PATH: Path = BASE_DIR / "app" / "certs" / "jwt-private.pem"
+    PRIVATE_KEY_PATH: Path = BASE_DIR / "certs" / "private_key_jwt.pem"
+    PUBLIC_KEY_PATH: Path = BASE_DIR / "certs" / "private_key_jwt.pem"
     ALGORITHM: str = "RS256"
     access_token_expire_minutes: int = 1
     refresh_token_expire_days: int = 2

@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import UsersORM
-from app.schemas import SUserCreate
+from app.schemas import SUserCreate, SUserBase
 
 
 async def get_user_by_id(session: AsyncSession, user_id: int) -> UsersORM | None:
@@ -28,12 +28,12 @@ async def get_all_users(session: AsyncSession) -> list[UsersORM]:
 
 
 async def create_user(
-    session: AsyncSession, user_data: SUserCreate, hashed_password: str
+    session: AsyncSession, user_data: SUserBase, hashed_password: bytes
 ) -> UsersORM:
     new_user = UsersORM(
         username=user_data.username,
         email=user_data.email,
-        password=hashed_password,
+        hashed_password=hashed_password,
     )
     session.add(new_user)
     await session.commit()

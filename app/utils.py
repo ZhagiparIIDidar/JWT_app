@@ -8,10 +8,10 @@ from app.config import settings
 
 def encode_jwt(
     payload: dict,
-    private_key = settings.auth_jwt.private_key_path.read_text(),
-    algorithm = settings.auth_jwt.algorithm,
+    private_key=settings.auth_jwt.PRIVATE_KEY_PATH.read_text(),
+    algorithm=settings.auth_jwt.ALGORITHM,
     expire_minutes: int = settings.auth_jwt.access_token_expire_minutes,
-    expire_delta: timedelta | None = None
+    expire_delta: timedelta | None = None,
 ):
     to_encoded = payload.copy()
     now = datetime.utcnow()
@@ -19,40 +19,31 @@ def encode_jwt(
         expire = now + expire_delta
     else:
         expire = now + timedelta(minutes=expire_minutes)
-    to_encoded.update(
-        exp=expire,
-        iat=now
-    )
-    encoded = jwt.encode(
-        to_encoded,
-        private_key,
-        algorithm=algorithm
-    )
+    to_encoded.update(exp=expire, iat=now)
+    encoded = jwt.encode(to_encoded, private_key, algorithm=algorithm)
     return encoded
+
 
 def decode_jwt(
     token: str | dict,
-    public_key=settings.auth_jwt.public_key_path.read_text(),
-    algorithm=settings.auth_jwt.algorithm
+    public_key=settings.auth_jwt.PUBLIC_KEY_PATH.read_text(),
+    algorithm=settings.auth_jwt.ALGORITHM,
 ):
-    decoded = jwt.decode(
-        token,
-        public_key,
-        algorithms=[algorithm]
-    )
+    decoded = jwt.decode(token, public_key, algorithms=[algorithm])
     return decoded
 
 
 def hash_password(
-        password: str,
+    password: str,
 ) -> bytes:
     salt = bcrypt.gensalt()
     pwd_bytes: bytes = password.encode()
     return bcrypt.hashpw(pwd_bytes, salt)
 
+
 def validate_password(
-        password: str,
-        hashed_password: bytes,
+    password: str,
+    hashed_password: bytes,
 ) -> bool:
     return bcrypt.checkpw(
         password=password.encode(),
