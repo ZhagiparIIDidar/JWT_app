@@ -15,6 +15,7 @@ class SUser(SUserBase):
 
     id: int
 
+
 class SUserInDB(SUserBase):
     model_config = ConfigDict(from_attributes=True)
 

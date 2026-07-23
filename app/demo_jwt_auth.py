@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPBearer
 
-from app.shemas import SUser, TokenInfo
+from app.schemas import SUser, TokenInfo
 from app.helpers import (
     create_access_token,
     create_refresh_token,
