@@ -5,7 +5,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, HT
 from jwt import InvalidTokenError
 from starlette import status
 
-from app.crud import demo_db
+from app import crud
 from app.utils import validate_password, decode_jwt, encode_jwt
 from app.shemas import SUser
 from app.config import settings
@@ -27,7 +27,7 @@ unauthed_exp = HTTPException(
 def create_token(
     token_type: str,
     token_data: dict,
-    expire_minutes: int = settings.access_token_expire_minutes,
+    expire_minutes: int = settings.auth_jwt.access_token_expire_minutes,
     expire_delta: timedelta | None = None,
 ):
     jwt_payload = {TOKEN_TYPE_FIELD: token_type}
@@ -38,7 +38,7 @@ def create_token(
 
 
 def validate_auth_user(form_data: OAuth2PasswordRequestForm = Depends()):
-    if not (user := demo_db.get(form_data.username)):
+    if not (user := crud):
         raise unauthed_exp
     if not (
         validate_password(

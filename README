@@ -1,0 +1,119 @@
+Да, можно. Причём есть несколько способов в зависимости от того, что именно ты хочешь проверить.
+
+### 1. Проверить, что проект вообще запускается (без поднятия сервера)
+
+Можно просто импортировать главный файл:
+
+```bash
+python -c "from app.main import app"
+```
+
+Если ошибок нет — значит, импорты, настройки и создание приложения работают.
+
+---
+
+### 2. Проверить синтаксис всех файлов
+
+```bash
+python -m compileall .
+```
+
+или
+
+```bash
+python -m py_compile app/main.py
+```
+
+Это найдёт синтаксические ошибки (`SyntaxError`), но не ошибки логики.
+
+---
+
+### 3. Проверить импорт отдельных модулей
+
+Например:
+
+```bash
+python -c "from app.core.config import settings"
+```
+
+или
+
+```bash
+python -c "from app.models.users import UsersORM"
+```
+
+Если импорт проходит без ошибок, значит, зависимости настроены правильно.
+
+---
+
+### 4. Проверить подключение к базе
+
+Можно написать небольшой скрипт:
+
+```python
+import asyncio
+
+from app.database import engine
+
+
+async def main():
+    async with engine.begin() as conn:
+        print("Подключение успешно")
+
+
+asyncio.run(main())
+```
+
+Так ты убедишься, что настройки БД и соединение работают.
+
+---
+
+### 5. Проверить миграции Alembic
+
+Не поднимая FastAPI:
+
+```bash
+alembic current
+```
+
+или
+
+```bash
+alembic upgrade head
+```
+
+---
+
+### 6. Проверить API без запуска Uvicorn
+
+Если использовать `TestClient`, можно выполнять запросы к приложению, не запуская сервер:
+
+```python
+from fastapi.testclient import TestClient
+from app.main import app
+
+client = TestClient(app)
+
+response = client.get("/")
+print(response.status_code)
+print(response.json())
+```
+
+Это именно тот способ, который используют в автоматических тестах (`pytest`).
+
+---
+
+### Что я рекомендую
+
+Пока ты разрабатываешь проект **Library**, после каждого изменения делай такую последовательность:
+
+1. `python -c "from app.main import app"` — проверка импортов.
+2. `alembic upgrade head` — проверка миграций.
+3. `pytest` (когда появятся тесты).
+4. И только затем запускай сервер:
+
+```bash
+uvicorn app.main:app --reload
+```
+
+Так ты будешь находить многие ошибки ещё до запуска сервера, что экономит время.
