@@ -1,5 +1,5 @@
-from shemas import SUser
-from utils import hash_password
+from app.shemas import SUser
+from app.utils import hash_password
 
 sergei = SUser(
     username="Sergei", password=hash_password("qwerty"), email="sergei@mail.com"

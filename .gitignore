@@ -10,7 +10,7 @@ __pychace__/
 .venv/
 
 # Environment variables
-.env
+.env.example
 .env.*
 
 # Local DB
