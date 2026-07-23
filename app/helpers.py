@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import Annotated
 
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, HTTPBasic
@@ -9,6 +10,7 @@ from app import crud
 from app.utils import validate_password, decode_jwt, encode_jwt
 from app.shemas import SUser
 from app.config import settings
+from app.database import SessionDep
 
 TOKEN_TYPE_FIELD = "type"
 ACCESS_TOKEN_TYPE = "access"
@@ -24,6 +26,7 @@ unauthed_exp = HTTPException(
 )
 
 
+
 def create_token(
     token_type: str,
     token_data: dict,
@@ -37,8 +40,8 @@ def create_token(
     )
 
 
-def validate_auth_user(form_data: OAuth2PasswordRequestForm = Depends()):
-    if not (user := crud):
+def validate_auth_user(form_data: OAuth2PasswordRequestForm = Depends(), session: SessionDep):
+    if not (user := crud.get_user_by_username(form_data.username)):
         raise unauthed_exp
     if not (
         validate_password(
@@ -52,6 +55,13 @@ def validate_auth_user(form_data: OAuth2PasswordRequestForm = Depends()):
 
     return user
 
+async def get_tokens(user: Annotated[SUser, Depends(validate_auth_user)]):
+    # Здесь генерируешь access_token и refresh_token
+    return {
+        "access_token": create_access_token(user),
+        "refresh_token": create_refresh_token(user),
+        "token_type": "bearer"
+    }
 
 def create_access_token(user: SUser = Depends(validate_auth_user)):
     jwt_payload = {"sub": user.username, "username": user.username, "email": user.email}

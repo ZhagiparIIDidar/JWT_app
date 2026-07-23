@@ -8,6 +8,7 @@ from app.helpers import (
     validate_auth_user,
     get_current_user_for_refresh,
     get_current_user,
+    get_tokens,
 )
 
 http_bearer = HTTPBearer(auto_error=False)
@@ -20,14 +21,8 @@ router = APIRouter(
 
 
 @router.post("/login")
-def get_tokens(user: SUser = Depends(validate_auth_user)):
-    access_token = create_access_token(user)
-    refresh_token = create_refresh_token(user)
-
-    return TokenInfo(
-        access_token=access_token,
-        refresh_token=refresh_token,
-    )
+def get_tokens(tokens: TokenInfo = Depends(get_tokens)):
+    return tokens
 
 
 @router.post(

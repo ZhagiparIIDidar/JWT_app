@@ -1,34 +1,34 @@
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import UsersORM
 from app.schemas import SUserCreate
-from app.database import SessionDep
 
 
-async def get_user_by_id(session: SessionDep, user_id: int) -> UsersORM | None:
+async def get_user_by_id(session: AsyncSession, user_id: int) -> UsersORM | None:
     result = await session.execute(select(UsersORM).where(UsersORM.id == user_id))
     return result.scalar_one_or_none()
 
 
-async def get_user_by_username(session: SessionDep, username: str) -> UsersORM | None:
+async def get_user_by_username(session: AsyncSession, username: str) -> UsersORM | None:
     result = await session.execute(
         select(UsersORM).where(UsersORM.username == username)
     )
     return result.scalar_one_or_none()
 
 
-async def get_user_by_email(session: SessionDep, email: str) -> UsersORM | None:
+async def get_user_by_email(session: AsyncSession, email: str) -> UsersORM | None:
     result = await session.execute(select(UsersORM).where(UsersORM.email == email))
     return result.scalar_one_or_none()
 
 
-async def get_all_users(session: SessionDep) -> list[UsersORM]:
+async def get_all_users(session: AsyncSession) -> list[UsersORM]:
     result = await session.execute(select(UsersORM))
     return list(result.scalars().all())
 
 
 async def create_user(
-    session: SessionDep, user_data: SUserCreate, hashed_password: str
+    session: AsyncSession, user_data: SUserCreate, hashed_password: str
 ) -> UsersORM:
     new_user = UsersORM(
         username=user_data.username,
@@ -41,7 +41,7 @@ async def create_user(
     return new_user
 
 
-async def update_user(session: SessionDep, user_id: int, **fields) -> UsersORM | None:
+async def update_user(session: AsyncSession, user_id: int, **fields) -> UsersORM | None:
     user = await get_user_by_id(session, user_id)
     if not user:
         return None
@@ -52,7 +52,7 @@ async def update_user(session: SessionDep, user_id: int, **fields) -> UsersORM |
     return user
 
 
-async def delete_user(session: SessionDep, user_id: int) -> bool:
+async def delete_user(session: AsyncSession, user_id: int) -> bool:
     user = await get_user_by_id(session, user_id)
     if not user:
         return False
